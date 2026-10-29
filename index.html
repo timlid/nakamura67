@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Chat with me here (@kolikkonik)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      background: #080810;
+      color: #fff;
+    }
+
+    button { cursor: pointer; font-family: inherit; border: none; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Background ── */
+    .root {
+      min-height: 100svh;
+      background: #0d0118;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Blurred fill behind the photo */
+    .root::before,
+    .root::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('images/photo.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .root::before {
+      background-size: cover;
+      filter: blur(28px);
+      transform: scale(1.1);
+    }
+
+    /* Whole photo, zoomed out */
+    .root::after {
+      background-size: contain;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(13,1,24,.72), rgba(26,5,48,.78));
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Main centered column ── */
+    .main {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 420px;
+      padding: 52px 24px 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* ── Avatar ── */
+    .avatar-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin-bottom: 4px;
+    }
+
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,.2);
+      box-shadow: 0 0 0 5px rgba(147,51,234,.25);
+    }
+
+    .dot {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      width: 16px; height: 16px;
+      background: #22c55e;
+      border-radius: 50%;
+      border: 2px solid #0d0118;
+      box-shadow: 0 0 8px rgba(34,197,94,.8);
+    }
+
+    /* ── Name ── */
+    .name {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -.5px;
+      background: linear-gradient(135deg, #fff 30%, rgba(216,180,254,.9));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+    }
+
+    /* ── Badges ── */
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      justify-content: center;
+    }
+
+    .badge {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 100px;
+      padding: 4px 11px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,.7);
+    }
+
+    /* ── Viewers ── */
+    .viewers {
+      font-size: 12px;
+      color: rgba(255,255,255,.35);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .view-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ec4899;
+      box-shadow: 0 0 6px rgba(236,72,153,.8);
+    }
+
+    /* ── BURNING CTA button ── */
+    @keyframes fire-glow {
+      0%, 100% {
+        box-shadow:
+          0 0 18px rgba(251,146,60,.55),
+          0 0 40px rgba(220,38,38,.3),
+          0 8px 32px rgba(0,0,0,.45);
+      }
+      50% {
+        box-shadow:
+          0 0 32px rgba(251,146,60,.85),
+          0 0 65px rgba(220,38,38,.55),
+          0 12px 40px rgba(0,0,0,.5);
+      }
+    }
+
+    @keyframes fire-scale {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.015); }
+    }
+
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 20px 24px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,160,50,.35);
+      background: linear-gradient(135deg, #c2410c 0%, #dc2626 45%, #7e22ce 100%);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      text-shadow: 0 1px 4px rgba(0,0,0,.4);
+      min-height: 72px;
+      margin-top: 8px;
+      cursor: pointer;
+      animation: fire-glow 2.2s ease-in-out infinite, fire-scale 2.2s ease-in-out infinite;
+      transition: transform .15s, opacity .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.14), transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-btn:hover  { transform: translateY(-2px); opacity: .92; }
+    .cta-btn:active { transform: translateY(0);    opacity: .82; }
+
+    .cta-icon  { font-size: 26px; flex-shrink: 0; }
+    .cta-text  { flex: 1; }
+    .cta-title { display: block; }
+    .cta-sub   { display: block; font-size: 12px; font-weight: 500; opacity: .72; margin-top: 2px; }
+    .cta-arrow { font-size: 18px; opacity: .8; transition: transform .15s; flex-shrink: 0; }
+    .cta-btn:hover .cta-arrow { transform: translateX(4px); opacity: 1; }
+
+    /* ── Footer ── */
+    .footer {
+      position: fixed;
+      bottom: 8px; left: 0; right: 0;
+      text-align: center;
+      font-size: 11px;
+      opacity: .22;
+      letter-spacing: .1em;
+      user-select: none;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── 18+ Age Gate ── */
+    @keyframes age-in {
+      from { opacity: 0; transform: translateY(16px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .age-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(8,8,16,.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .age-overlay.active { display: flex; }
+
+    .age-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(192,132,252,.1);
+      animation: age-in .3s ease;
+    }
+
+    .age-icon  { font-size: 48px; margin-bottom: 16px; }
+
+    .age-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+      letter-spacing: -.3px;
+    }
+
+    .age-text {
+      font-size: 14px;
+      color: rgba(255,255,255,.55);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .age-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+    .age-yes {
+      width: 100%;
+      padding: 16px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #9333ea, #ec4899);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: .2px;
+      box-shadow: 0 4px 20px rgba(147,51,234,.4);
+      transition: opacity .15s, transform .15s;
+    }
+
+    .age-yes:hover  { opacity: .9; transform: translateY(-1px); }
+    .age-yes:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .age-captcha { display: flex; justify-content: center; min-height: 65px; margin-bottom: 14px; }
+    .age-yes:active { transform: translateY(0); opacity: .8; }
+
+    .age-no {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: transparent;
+      color: rgba(255,255,255,.4);
+      font-size: 14px;
+      font-weight: 500;
+      transition: color .15s, border-color .15s;
+    }
+
+    .age-no:hover { color: rgba(255,255,255,.7); border-color: rgba(255,255,255,.2); }
+
+    .age-disclaimer {
+      margin-top: 20px;
+      font-size: 11px;
+      color: rgba(255,255,255,.22);
+      line-height: 1.5;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 12px;
+      color: rgba(255,255,255,.25);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,.1);
+    }
+
+    /* ── Secondary buttons ── */
+    .sec-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      width: 100%;
+    }
+
+    .sec-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.8);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      text-align: left;
+    }
+
+    .sec-btn:hover {
+      background: rgba(255,255,255,.11);
+      border-color: rgba(255,255,255,.16);
+    }
+
+    .sec-icon  { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+    .sec-label { flex: 1; }
+    .sec-arrow { font-size: 14px; opacity: .45; transition: transform .15s, opacity .15s; }
+    .sec-btn:hover .sec-arrow { transform: translateX(3px); opacity: .9; }
+  </style>
+</head>
+<body>
+
+<div class="root">
+  <div class="overlay"></div>
+
+  <main class="main">
+
+    <!-- Avatar -->
+    <div class="avatar-wrap">
+      <img
+        class="avatar"
+        src="images/photo.jpg"
+        alt="kolikkonik"
+      >
+      <span class="dot"></span>
+    </div>
+
+    <!-- Name -->
+    <h1 class="name">Chat with me here</h1>
+
+    <!-- Badges -->
+    <div class="badges">
+      <span class="badge">🟢&nbsp; Online now</span>
+      <span class="badge">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Twitter_Verified_Badge.svg"
+          alt="" style="width:1em;height:1em;vertical-align:middle;display:inline-block">&nbsp; Verified creator
+      </span>
+      <span class="badge">⚡&nbsp; Responds in 5 min</span>
+    </div>
+
+    <!-- Viewers -->
+    <div class="viewers">
+      <span class="view-dot"></span>
+      24 people viewing now
+    </div>
+
+    <!-- 🔥 CTA -->
+    <button class="cta-btn" id="cta-btn" type="button">
+      <span class="cta-icon">🔥</span>
+      <span class="cta-text">
+        <span class="cta-title">3-Day Free Trial</span>
+        <span class="cta-sub">Exclusive access to all content</span>
+      </span>
+      <span class="cta-arrow">→</span>
+    </button>
+
+    <!-- Divider -->
+    <div class="divider">or</div>
+
+    <!-- Secondary buttons -->
+    <div class="sec-list">
+      <button class="sec-btn sec-gate" type="button">
+        <span class="sec-icon">👑</span>
+        <span class="sec-label">My exclusive page</span>
+        <span class="sec-arrow">›</span>
+      </button>
+      <button class="sec-btn sec-gate" type="button">
+        <span class="sec-icon">💬</span>
+        <span class="sec-label">Chat with me here</span>
+        <span class="sec-arrow">›</span>
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- Footer -->
+<div class="footer">© kolikkonik · 2026</div>
+
+<!-- 18+ Age Gate -->
+<div class="age-overlay" id="age-overlay">
+  <div class="age-card">
+    <div class="age-icon">🔞</div>
+    <div class="age-title">Adult Content</div>
+    <div class="age-text">
+      This page contains content intended for adults aged 18 and over.
+      By proceeding, you confirm that you are of legal age in your
+      jurisdiction and consent to viewing adult material.
+    </div>
+    <!-- Cloudflare Turnstile: replace data-sitekey with your site key -->
+    <div class="age-captcha">
+      <div class="cf-turnstile"
+        data-sitekey="1x00000000000000000000AA"
+        data-theme="dark"
+        data-callback="onCaptchaOk"
+        data-expired-callback="onCaptchaReset"
+        data-error-callback="onCaptchaReset"></div>
+    </div>
+    <div class="age-buttons">
+      <button class="age-yes" id="age-yes" disabled>I am 18+, Continue</button>
+      <button class="age-no"  id="age-no">Cancel</button>
+    </div>
+    <div class="age-disclaimer">
+      By continuing you agree to our Terms of Service and confirm<br>
+      you are at least 18 years of age.
+    </div>
+  </div>
+</div>
+
+<script>
+  const overlay = document.getElementById('age-overlay');
+  const btnYes  = document.getElementById('age-yes');
+  const btnNo   = document.getElementById('age-no');
+  const ctaBtn  = document.getElementById('cta-btn');
+
+  function openGate() {
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  ctaBtn.addEventListener('click', openGate);
+
+  document.querySelectorAll('.sec-gate').forEach(btn =>
+    btn.addEventListener('click', openGate)
+  );
+
+  function close() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  btnNo.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+  // Captcha token; the link is only returned by /api/go after server-side verification
+  let captchaToken = null;
+
+  function onCaptchaOk(token) {
+    captchaToken = token;
+    btnYes.disabled = false;
+  }
+
+  function onCaptchaReset() {
+    captchaToken = null;
+    btnYes.disabled = true;
+  }
+
+  btnYes.addEventListener('click', async () => {
+    if (!captchaToken) return;
+
+    // Open the tab synchronously so the popup blocker allows it
+    const win = window.open('about:blank', '_blank');
+    btnYes.disabled = true;
+
+    try {
+      const res = await fetch('/api/go', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: captchaToken })
+      });
+      if (!res.ok) throw new Error('verify failed');
+      const { url } = await res.json();
+
+      close();
+      if (win) { win.opener = null; win.location.href = url; }
+      else window.location.href = url;
+    } catch {
+      if (win) win.close();
+    } finally {
+      // Tokens are single-use
+      onCaptchaReset();
+      if (window.turnstile) turnstile.reset();
+    }
+  });
+</script>
+
+</body>
+</html>
